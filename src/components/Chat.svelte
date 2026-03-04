@@ -7,14 +7,16 @@
   import { buildSystemPrompt } from '../lib/llm/prompts';
   import { generateScene } from '../lib/scenario/engine';
   import { generatePersona } from '../lib/persona/generator';
-  import { savePersona } from '../lib/persona/store';
-  import { getMemoriesForPersona } from '../lib/memory/store';
+  import { savePersona, deletePersona } from '../lib/persona/store';
+  import { getMemoriesForPersona, deleteMemoriesForPersona } from '../lib/memory/store';
   import { summarizeAndStoreConversation } from '../lib/memory/episodic';
-  import { saveConversation } from '../lib/conversation/store';
+  import { saveConversation, getLatestConversationForPersona, deleteConversationsForPersona } from '../lib/conversation/store';
+  import type { Persona } from '../lib/persona/schema';
 
   let inputText = $state('');
   let sceneInput = $state('');
   let chatContainer: HTMLDivElement | undefined = $state();
+  let isResuming = $state(false);
 
   const isInScene = $derived(sceneStore.current !== null && personaStore.active !== null);
 
@@ -27,6 +29,83 @@
       });
     }
   });
+
+  async function resumePersona(persona: Persona) {
+    if (isResuming) return;
+    isResuming = true;
+
+    try {
+      const conversation = await getLatestConversationForPersona(persona.id);
+
+      if (conversation) {
+        chatStore.clear();
+        sceneStore.setScene(conversation.scene);
+        personaStore.setActive(persona);
+        chatStore.loadMessages(conversation.messages, conversation.id);
+        chatStore.addMessage('narrator', `You return to ${conversation.scene.location}...`);
+
+        const memories = await getMemoriesForPersona(persona.id);
+        const systemPrompt = buildSystemPrompt(persona, conversation.scene, memories);
+
+        chatStore.isGenerating = true;
+        let fullResponse = '';
+        for await (const chunk of llmEngine.chatStream([
+          { role: 'system', content: systemPrompt },
+          ...conversation.messages.slice(-10).filter(m => m.role !== 'narrator').map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content,
+          })),
+          { role: 'user', content: '[You return to continue the conversation. Greet them warmly, referencing something from your previous interaction.]' },
+        ])) {
+          fullResponse += chunk;
+          chatStore.updateStreamingContent(fullResponse);
+        }
+        chatStore.finalizeStream(persona.identity.name);
+      } else {
+        chatStore.clear();
+        personaStore.setActive(persona);
+        const scene = {
+          description: `A familiar place where you've met ${persona.identity.name} before.`,
+          location: persona.background.currentLocation,
+          time: 'Daytime',
+          era: persona.context.era,
+          atmosphere: 'Comfortable and familiar',
+        };
+        sceneStore.setScene(scene);
+        chatStore.startNewConversation();
+        chatStore.addMessage('narrator', `You find ${persona.identity.name} at ${scene.location}.`);
+
+        const memories = await getMemoriesForPersona(persona.id);
+        const systemPrompt = buildSystemPrompt(persona, scene, memories);
+        chatStore.isGenerating = true;
+        let fullResponse = '';
+        for await (const chunk of llmEngine.chatStream([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `[A familiar face approaches you at ${scene.location}. Greet them.]` },
+        ])) {
+          fullResponse += chunk;
+          chatStore.updateStreamingContent(fullResponse);
+        }
+        chatStore.finalizeStream(persona.identity.name);
+      }
+    } catch (err) {
+      chatStore.addMessage('narrator', `Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      chatStore.isGenerating = false;
+      isResuming = false;
+    }
+  }
+
+  async function removePersona(e: Event, persona: Persona) {
+    e.stopPropagation();
+    if (!confirm(`Forget ${persona.identity.name}? This removes all conversations and memories.`)) return;
+    try {
+      await deletePersona(persona.id);
+      await deleteConversationsForPersona(persona.id);
+      await deleteMemoriesForPersona(persona.id);
+      personaStore.all = personaStore.all.filter(p => p.id !== persona.id);
+    } catch { /* silent */ }
+  }
 
   // Auto-save conversation after each message exchange
   async function autoSave() {
@@ -191,6 +270,33 @@
           <p>💡 "A tavern in a medieval village"</p>
           <p>💡 "A space station orbiting Mars, year 2340"</p>
         </div>
+
+        {#if personaStore.all.length > 0}
+          <div class="max-w-lg w-full mb-8">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Continue a conversation</h3>
+            <div class="grid gap-2">
+              {#each personaStore.all as persona}
+                <div class="flex items-center bg-gray-800 rounded-lg hover:bg-gray-700/80 transition-colors group">
+                  <button
+                    onclick={() => resumePersona(persona)}
+                    disabled={isResuming}
+                    class="flex-1 text-left px-4 py-3 disabled:opacity-50 cursor-pointer"
+                  >
+                    <span class="text-sm font-medium text-gray-200">{persona.identity.name}</span>
+                    <span class="text-xs text-gray-500 ml-2">{persona.background.profession} · 📍 {persona.background.currentLocation}</span>
+                  </button>
+                  <button
+                    onclick={(e) => removePersona(e, persona)}
+                    class="px-3 py-2 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
+                    title="Forget {persona.identity.name}"
+                  >
+                    ✕
+                  </button>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
 
         <div class="max-w-lg mx-auto bg-gray-800/60 border border-gray-700 rounded-xl px-5 py-4 text-xs text-gray-500 leading-relaxed">
           <p class="font-semibold text-gray-400 mb-1">⚠️ Disclaimer</p>
