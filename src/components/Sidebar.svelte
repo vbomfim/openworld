@@ -118,7 +118,7 @@
 </script>
 
 {#if inactivePersonas.length > 0}
-  <div class="bg-gray-800/50 border-r border-gray-700 w-56 flex-shrink-0 overflow-y-auto hidden md:flex md:flex-col">
+  <div class="bg-gray-800/50 border-r border-gray-700 w-56 flex-shrink-0 flex flex-col">
     <div class="p-3 border-b border-gray-700">
       <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">People you've met</h2>
     </div>

@@ -9,6 +9,8 @@
   import { getAllPersonas } from './lib/persona/store';
   import { onMount } from 'svelte';
 
+  let sidebarOpen = $state(false);
+
   onMount(async () => {
     try {
       const personas = await getAllPersonas();
@@ -24,7 +26,18 @@
 {:else}
   <div class="flex flex-col h-screen bg-gray-900 text-white">
     <header class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
-      <h1 class="text-xl font-bold">🌍 OpenWorld</h1>
+      <div class="flex items-center gap-3">
+        {#if personaStore.all.length > 0}
+          <button
+            onclick={() => sidebarOpen = !sidebarOpen}
+            class="text-gray-400 hover:text-white transition-colors cursor-pointer text-sm"
+            title="{sidebarOpen ? 'Hide' : 'Show'} people you've met"
+          >
+            {sidebarOpen ? '◀' : '☰'}
+          </button>
+        {/if}
+        <h1 class="text-xl font-bold">🌍 OpenWorld</h1>
+      </div>
       <div class="text-xs text-gray-500">
         Model: {llmEngine.modelId?.split('-').slice(0, 3).join(' ')}
       </div>
@@ -33,7 +46,9 @@
     <SceneHeader />
 
     <div class="flex flex-1 overflow-hidden">
-      <Sidebar />
+      {#if sidebarOpen}
+        <Sidebar />
+      {/if}
 
       <div class="flex-1">
         <Chat />
