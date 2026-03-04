@@ -17,6 +17,7 @@
   let sceneInput = $state('');
   let chatContainer: HTMLDivElement | undefined = $state();
   let isResuming = $state(false);
+  let isLeaving = $state(false);
 
   const isInScene = $derived(sceneStore.current !== null && personaStore.active !== null);
 
@@ -228,6 +229,7 @@
   }
 
   async function newScene() {
+    isLeaving = true;
     if (personaStore.active && chatStore.messages.length > 2) {
       try {
         await autoSave();
@@ -240,6 +242,7 @@
     chatStore.clear();
     sceneStore.clear();
     personaStore.clear();
+    isLeaving = false;
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -357,10 +360,15 @@
       {#if isInScene}
         <button
           onclick={newScene}
-          class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-3 rounded-xl transition-colors cursor-pointer text-sm"
+          disabled={isLeaving}
+          class="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-300 px-3 py-3 rounded-xl transition-colors cursor-pointer text-sm"
           title="Leave scene"
         >
-          🚪
+          {#if isLeaving}
+            <span class="animate-spin inline-block">⏳</span>
+          {:else}
+            🚪
+          {/if}
         </button>
         <input
           type="text"
