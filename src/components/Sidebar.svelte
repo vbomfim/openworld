@@ -2,15 +2,28 @@
   import { personaStore } from '../stores/persona.svelte';
   import { sceneStore } from '../stores/scene.svelte';
   import { chatStore } from '../stores/chat.svelte';
-  import { getLatestConversationForPersona } from '../lib/conversation/store';
-  import { getMemoriesForPersona } from '../lib/memory/store';
+  import { getLatestConversationForPersona, deleteConversationsForPersona } from '../lib/conversation/store';
+  import { getMemoriesForPersona, deleteMemoriesForPersona } from '../lib/memory/store';
   import { llmEngine } from '../lib/llm/engine.svelte';
   import { buildSystemPrompt } from '../lib/llm/prompts';
   import { summarizeAndStoreConversation } from '../lib/memory/episodic';
   import { saveConversation } from '../lib/conversation/store';
+  import { deletePersona } from '../lib/persona/store';
   import type { Persona } from '../lib/persona/schema';
 
   let isResuming = $state(false);
+
+  async function removePersona(e: Event, persona: Persona) {
+    e.stopPropagation();
+    if (!confirm(`Forget ${persona.identity.name}? This removes all conversations and memories.`)) return;
+
+    try {
+      await deletePersona(persona.id);
+      await deleteConversationsForPersona(persona.id);
+      await deleteMemoriesForPersona(persona.id);
+      personaStore.all = personaStore.all.filter(p => p.id !== persona.id);
+    } catch { /* silent */ }
+  }
 
   async function resumePersona(persona: Persona) {
     if (isResuming) return;
@@ -112,15 +125,24 @@
 
     <div class="flex-1 overflow-y-auto">
       {#each inactivePersonas as persona}
-        <button
-          onclick={() => resumePersona(persona)}
-          disabled={isResuming || chatStore.isGenerating}
-          class="w-full text-left px-3 py-3 hover:bg-gray-700/50 transition-colors border-b border-gray-800 disabled:opacity-50 cursor-pointer"
-        >
-          <p class="text-sm font-medium text-gray-200 truncate">{persona.identity.name}</p>
-          <p class="text-xs text-gray-500 truncate">{persona.background.profession}</p>
-          <p class="text-xs text-gray-600 truncate">📍 {persona.background.currentLocation}</p>
-        </button>
+        <div class="flex items-center border-b border-gray-800 hover:bg-gray-700/50 transition-colors group">
+          <button
+            onclick={() => resumePersona(persona)}
+            disabled={isResuming || chatStore.isGenerating}
+            class="flex-1 text-left px-3 py-3 disabled:opacity-50 cursor-pointer"
+          >
+            <p class="text-sm font-medium text-gray-200 truncate">{persona.identity.name}</p>
+            <p class="text-xs text-gray-500 truncate">{persona.background.profession}</p>
+            <p class="text-xs text-gray-600 truncate">📍 {persona.background.currentLocation}</p>
+          </button>
+          <button
+            onclick={(e) => removePersona(e, persona)}
+            class="px-2 py-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            title="Forget {persona.identity.name}"
+          >
+            ✕
+          </button>
+        </div>
       {/each}
     </div>
   </div>

@@ -45,3 +45,13 @@ export async function getAllConversations(): Promise<StoredConversation[]> {
   const db = await getDB();
   return db.getAll('conversations');
 }
+
+export async function deleteConversationsForPersona(personaId: string): Promise<void> {
+  const conversations = await getConversationsForPersona(personaId);
+  const db = await getDB();
+  const tx = db.transaction('conversations', 'readwrite');
+  for (const conv of conversations) {
+    await tx.store.delete(conv.id);
+  }
+  await tx.done;
+}
