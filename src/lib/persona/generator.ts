@@ -6,7 +6,7 @@ export async function generatePersona(sceneHint?: string): Promise<Persona> {
   const prompt = buildPersonaGenerationPrompt(sceneHint);
 
   const response = await llmEngine.chat([
-    { role: 'system', content: 'You are a character generator. Return only valid JSON. No markdown code fences, no explanation, no extra text.' },
+    { role: 'system', content: 'You are a character generator. Return only valid JSON. No markdown code fences, no explanation, no extra text. Do not use newlines inside string values.' },
     { role: 'user', content: prompt },
   ]);
 
@@ -15,6 +15,12 @@ export async function generatePersona(sceneHint?: string): Promise<Persona> {
   if (jsonMatch) {
     jsonStr = jsonMatch[0];
   }
+
+  // Sanitize control characters inside JSON string values
+  jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, (ch) => {
+    if (ch === '\n' || ch === '\r' || ch === '\t') return ' ';
+    return '';
+  });
 
   const data = JSON.parse(jsonStr);
 

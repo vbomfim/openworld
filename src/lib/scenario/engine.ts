@@ -17,6 +17,12 @@ export async function generateScene(userReference: string): Promise<Scene> {
     jsonStr = jsonMatch[0];
   }
 
+  // Sanitize control characters inside JSON string values
+  jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, (ch) => {
+    if (ch === '\n' || ch === '\r' || ch === '\t') return ' ';
+    return '';
+  });
+
   const data = JSON.parse(jsonStr);
 
   return {
