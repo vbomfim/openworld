@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" fill="none">
+  <defs>
+    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#EC4899" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" rx="16" fill="#0F172A"/>
+
+  <!-- Outer ring -->
+  <circle cx="100" cy="100" r="65" stroke="url(#ringGrad)" stroke-width="2" fill="none"/>
+
+  <!-- Globe body -->
+  <circle cx="100" cy="100" r="50" fill="url(#globeGrad)" opacity="0.15"/>
+  <circle cx="100" cy="100" r="50" stroke="url(#globeGrad)" stroke-width="2.5" fill="none" filter="url(#glow)"/>
+
+  <!-- Globe meridians -->
+  <ellipse cx="100" cy="100" rx="20" ry="50" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <ellipse cx="100" cy="100" rx="38" ry="50" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.3"/>
+
+  <!-- Globe parallels -->
+  <ellipse cx="100" cy="75" rx="46" ry="12" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.4"/>
+  <line x1="50" y1="100" x2="150" y2="100" stroke="url(#globeGrad)" stroke-width="1.2" opacity="0.4"/>
+  <ellipse cx="100" cy="125" rx="46" ry="12" stroke="url(#globeGrad)" stroke-width="1.2" fill="none" opacity="0.4"/>
+
+  <!-- Chat bubble (top-right of globe) -->
+  <g transform="translate(130, 50)" filter="url(#glow)">
+    <rect x="0" y="0" width="32" height="22" rx="6" fill="#3B82F6"/>
+    <polygon points="6,22 12,28 14,22" fill="#3B82F6"/>
+    <circle cx="9" cy="11" r="2" fill="white" opacity="0.9"/>
+    <circle cx="16" cy="11" r="2" fill="white" opacity="0.9"/>
+    <circle cx="23" cy="11" r="2" fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Person silhouette dots (on the globe) -->
+  <circle cx="85" cy="90" r="3.5" fill="#8B5CF6" opacity="0.8" filter="url(#glow)"/>
+  <circle cx="112" cy="108" r="3.5" fill="#EC4899" opacity="0.8" filter="url(#glow)"/>
+  <circle cx="95" cy="118" r="3" fill="#3B82F6" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="195" y="95" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="56" font-weight="800" fill="url(#textGrad)" letter-spacing="-1">
+    OpenWorld
+  </text>
+
+  <!-- Tagline -->
+  <text x="197" y="130" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="#94A3B8" font-weight="400">
+    Meet people. Have conversations. All in your browser.
+  </text>
+
+  <!-- Accent badges -->
+  <g transform="translate(197, 148)">
+    <rect x="0" y="0" width="72" height="22" rx="11" fill="#3B82F6" opacity="0.15"/>
+    <text x="36" y="15" font-family="system-ui, sans-serif" font-size="11" fill="#60A5FA" text-anchor="middle" font-weight="600">WebGPU</text>
+
+    <rect x="82" y="0" width="62" height="22" rx="11" fill="#8B5CF6" opacity="0.15"/>
+    <text x="113" y="15" font-family="system-ui, sans-serif" font-size="11" fill="#A78BFA" text-anchor="middle" font-weight="600">Local AI</text>
+
+    <rect x="154" y="0" width="78" height="22" rx="11" fill="#EC4899" opacity="0.15"/>
+    <text x="193" y="15" font-family="system-ui, sans-serif" font-size="11" fill="#F472B6" text-anchor="middle" font-weight="600">No Server</text>
+  </g>
+</svg>

@@ -1,6 +1,15 @@
-# OpenWorld
+<p align="center">
+  <img src=".github/logo.svg" alt="OpenWorld" width="700" />
+</p>
 
-> Meet people. Have conversations. All in your browser.
+<p align="center">
+  <a href="https://github.com/vbomfim/openworld/actions/workflows/ci.yml"><img src="https://github.com/vbomfim/openworld/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/vbomfim/openworld/actions/workflows/codeql.yml"><img src="https://github.com/vbomfim/openworld/actions/workflows/codeql.yml/badge.svg" alt="CodeQL" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
+  <img src="https://img.shields.io/badge/WebGPU-powered-blueviolet" alt="WebGPU" />
+</p>
+
+---
 
 OpenWorld is a browser-based conversational world simulator powered by a local AI model running entirely in your browser via WebGPU. No backend, no cloud — everything stays on your device.
 
