@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, onMount, onDestroy } from 'svelte';
   import { chatStore } from '../stores/chat.svelte';
   import { personaStore } from '../stores/persona.svelte';
   import { sceneStore } from '../stores/scene.svelte';
@@ -10,6 +10,7 @@
   import { savePersona } from '../lib/persona/store';
   import { getMemoriesForPersona } from '../lib/memory/store';
   import { summarizeAndStoreConversation } from '../lib/memory/episodic';
+  import { saveConversation } from '../lib/conversation/store';
 
   let inputText = $state('');
   let sceneInput = $state('');
@@ -18,7 +19,6 @@
   const isInScene = $derived(sceneStore.current !== null && personaStore.active !== null);
 
   $effect(() => {
-    // Auto-scroll when messages change or streaming content updates
     if (chatStore.messages.length || chatStore.streamingContent) {
       tick().then(() => {
         if (chatContainer) {
@@ -26,6 +26,38 @@
         }
       });
     }
+  });
+
+  // Auto-save conversation after each message exchange
+  async function autoSave() {
+    if (chatStore.conversationId && personaStore.active && sceneStore.current && chatStore.messages.length > 0) {
+      try {
+        await saveConversation(
+          chatStore.conversationId,
+          personaStore.active.id,
+          sceneStore.current,
+          chatStore.messages,
+        );
+      } catch {
+        // Silent fail on auto-save
+      }
+    }
+  }
+
+  // Save on tab close
+  function handleBeforeUnload() {
+    if (chatStore.conversationId && personaStore.active && sceneStore.current && chatStore.messages.length > 0) {
+      // Use sync IndexedDB via navigator.sendBeacon isn't possible, so we do a best-effort save
+      autoSave();
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
   });
 
   async function startScene() {
@@ -45,6 +77,7 @@
       await savePersona(persona);
       personaStore.addToAll(persona);
 
+      chatStore.startNewConversation();
       chatStore.addMessage('narrator', `You find yourself at ${scene.location}. ${scene.description}`);
 
       // Generate persona's opening line
@@ -63,6 +96,7 @@
       }
 
       chatStore.finalizeStream(persona.identity.name);
+      await autoSave();
     } catch (err) {
       chatStore.addMessage('narrator', `Something went wrong: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -86,7 +120,6 @@
       const memories = await getMemoriesForPersona(persona.id);
       const systemPrompt = buildSystemPrompt(persona, sceneStore.current, memories);
 
-      // Build message history (last 20 messages for context)
       const contextMessages: Array<{ role: string; content: string }> = [
         { role: 'system', content: systemPrompt },
       ];
@@ -107,6 +140,7 @@
       }
 
       chatStore.finalizeStream(persona.identity.name);
+      await autoSave();
     } catch (err) {
       chatStore.addMessage('narrator', `Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -115,9 +149,9 @@
   }
 
   async function newScene() {
-    // Save memory of current conversation if there was one
     if (personaStore.active && chatStore.messages.length > 2) {
       try {
+        await autoSave();
         await summarizeAndStoreConversation(personaStore.active.id, chatStore.messages);
       } catch {
         // Memory save failed, continue anyway

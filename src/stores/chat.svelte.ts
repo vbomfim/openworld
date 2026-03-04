@@ -10,6 +10,7 @@ class ChatStore {
   messages = $state<ChatMessage[]>([]);
   isGenerating = $state(false);
   streamingContent = $state('');
+  conversationId = $state<string | null>(null);
 
   addMessage(role: ChatMessage['role'], content: string, personaName?: string) {
     this.messages.push({
@@ -32,10 +33,20 @@ class ChatStore {
     }
   }
 
+  loadMessages(messages: ChatMessage[], conversationId: string) {
+    this.messages = messages;
+    this.conversationId = conversationId;
+  }
+
+  startNewConversation() {
+    this.conversationId = crypto.randomUUID();
+  }
+
   clear() {
     this.messages = [];
     this.streamingContent = '';
     this.isGenerating = false;
+    this.conversationId = null;
   }
 }
 
