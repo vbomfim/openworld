@@ -11,7 +11,7 @@
 {#if llmEngine.status === 'idle' || llmEngine.status === 'error'}
   <div class="flex flex-col items-center justify-center min-h-screen p-8">
     <h1 class="text-5xl font-bold mb-3">🌍 OpenWorld</h1>
-    <p class="text-gray-400 mb-8 text-lg">Meet people. Have conversations. All in your browser.</p>
+    <p class="text-gray-400 mb-8 text-lg">Meet personas. Have conversations. All in your browser.</p>
 
     {#if llmEngine.error}
       <div class="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6 max-w-md">
