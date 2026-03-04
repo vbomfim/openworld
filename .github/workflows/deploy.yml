@@ -25,7 +25,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci || npm install
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules
+          npm install
 
       - name: Build
         run: npm run build
