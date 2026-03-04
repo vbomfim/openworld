@@ -4,6 +4,7 @@
   import Chat from './components/Chat.svelte';
   import SceneHeader from './components/SceneHeader.svelte';
   import PersonaCard from './components/PersonaCard.svelte';
+  import Sidebar from './components/Sidebar.svelte';
   import { personaStore } from './stores/persona.svelte';
   import { getAllPersonas } from './lib/persona/store';
   import { onMount } from 'svelte';
@@ -32,6 +33,8 @@
     <SceneHeader />
 
     <div class="flex flex-1 overflow-hidden">
+      <Sidebar />
+
       <div class="flex-1">
         <Chat />
       </div>
